@@ -1,0 +1,24 @@
+[Unit]
+Description=searxng container (Podman)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=notify
+Restart=on-failure
+RestartSec=10
+TimeoutStartSec=300
+ExecStartPre=/usr/bin/podman pull ghcr.io/searxng/searxng:latest
+ExecStart=/usr/bin/podman run --rm --name searxng \
+  --replace \
+  -p 8112:8080 \
+  -v /opt/searxng/config:/etc/searxng:Z \
+  -v /opt/searxng/data:/var/cache/searxng:Z \
+  --sdnotify=conmon \
+  ghcr.io/searxng/searxng:latest
+
+RestartSec=10
+ExecStop=/usr/bin/podman stop -t 10 searxng
+
+[Install]
+WantedBy=multi-user.target
