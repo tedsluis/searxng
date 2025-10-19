@@ -4,6 +4,8 @@ This repo contains a simple way to run **SearXNG** in a Podman container on Fedo
 
 > Tested on Fedora Workstation with Podman. Service runs as a systemd **system** unit by default.
 
+![alt text](images/image1.png)
+
 ## Contents
 
 - `install-searxng.sh` — installer/updater (creates folders, installs unit, pulls image)
@@ -13,7 +15,7 @@ This repo contains a simple way to run **SearXNG** in a Podman container on Fedo
 
 ## Podman or Docker
 
-**Podman** and **Docker** are largely interchangeable for most use cases: both follow OCI standards and share image formats, registries, volume semantics, and networking, so typical workflows are compatible. Unlike Docker, Podman is daemonless—it runs containers directly as regular processes (well-suited to rootless operation) without a central background service. So whenever you see **podman** in this instruction you can also use **docker**.
+**Podman** and **Docker** are largely interchangeable for most use cases: both follow OCI standards and share image formats, registries, volume semantics, and networking, so typical workflows are compatible. Unlike Docker, Podman is daemonless. It runs containers directly as regular processes (well-suited to rootless operation) without a central background service. So whenever you see **podman** in this instruction you can also use **docker**.
 
 ## Quick start
 
@@ -55,27 +57,72 @@ sudo systemctl restart searxng.service
 ### Minimal recommended settings
 
 ```yaml
+# SearXNG settings — minimal & Open-WebUI-friendly
+# Place as /opt/searxng/config/settings.yml (mounted to /etc/searxng inside the container)
+
 use_default_settings: true
 
+# UI language only; does NOT change search language.
+ui:
+  default_locale: nl
+
+# Branding
+general:
+  debug: false
+  instance_name: "SearXNG"
+
+# Search behavior & API 
 search:
-  secret_key: "ultrasecretkey" # will be overwritten by the install-searxng.sh with a hex 32
-  formats: [html, json]
-  method: POST
-  autocomplete: duckduckgo
+  # Safe search level (0=off, 1=moderate, 2=strict)
   safe_search: 1
-  language: nl
-  locale: nl
+  # Autocomplete source
+  autocomplete: 'duckduckgo'
+  # JSON is required for Open-WebUI / curl tests
+  formats:
+    - html
+    - json
+  # POST leaks less referrer than GET
+  method: POST
+  # Default language/locale of the SEARCH RESULTS (not the UI)
+  default_lang: en
+  language:
+    - en
+    - en-US
+    - en-GB
+    - nl
 
 server:
-  secret_key: "RANDOM_HEX_32"
-  base_url: "http://localhost:8112/"
-  image_proxy: true
+  # secret_key: "REPLACE_WITH_RANDOM_HEX"
+  secret_key: "ultrasecretkey"
+  # Turn limiter off if you don’t run Valkey (recommended for local-only use)
   limiter: false
+  # Proxy images for privacy
+  image_proxy: true
+  # Fixes links/redirects; adjust when using a reverse proxy.
+  base_url: "http://localhost:8112/"
 
 outgoing:
+  # Global timeout for engines (can be overridden per engine via `timeout`)
   request_timeout: 3.0
 
+# Plugins (optional, safe defaults)
+plugins:
+  - plugin: "Open Access DOI"
+    default_on: true
+  - plugin: "Auto-Search-on-Category-Select"
+    default_on: true
+
 # engines: enable only the ones you actually use; give each a timeout
+engines:
+  - name: duckduckgo
+    disabled: false
+    categories: general
+    timeout: 2.0
+
+  - name: wikipedia
+    disabled: false
+    categories: knowledge
+    timeout: 2.0
 ```
 
 ## Systemd service
@@ -98,6 +145,16 @@ API‑level health (JSON + engine check):
 bash scripts/healthcheck.sh
 OK: SearXNG healthy — HTML up, JSON API up (q='ping' engines='auto').
 ```
+
+## UI settings
+
+General preferences
+
+![alt text](images/image2.png)
+
+Engines
+
+![alt text](images/image3.png)
 
 ## Troubleshooting
 

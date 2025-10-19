@@ -1,37 +1,82 @@
-# SearXNG settings
+# SearXNG settings — minimal & Open-WebUI-friendly
+# Place as /opt/searxng/config/settings.yml (mounted to /etc/searxng inside the container)
 
 use_default_settings: true
 
+# UI language only; does NOT change search language.
+ui:
+  default_locale: nl
+
+# Branding
 general:
   debug: false
   instance_name: "SearXNG"
 
+# Search behavior & API 
 search:
-  safe_search: 2
+  # Safe search level (0=off, 1=moderate, 2=strict)
+  safe_search: 1
+  # Autocomplete source
   autocomplete: 'duckduckgo'
+  # JSON is required for Open-WebUI / curl tests
   formats:
     - html
     - json
+  # POST leaks less referrer than GET
   method: POST
+  # Default language/locale of the SEARCH RESULTS (not the UI)
+  default_lang: en
+  language:
+    - en
+    - en-US
+    - en-GB
+    - nl
+
 
 server:
+  # secret_key: "REPLACE_WITH_RANDOM_HEX"
   secret_key: "ultrasecretkey"
+  # Turn limiter off if you don’t run Valkey (recommended for local-only use)
   limiter: false
+  # Proxy images for privacy
   image_proxy: true
-  # public URL of the instance, to ensure correct inbound links. Is overwritten
-  # by ${SEARXNG_BASE_URL}.
+  # Fixes links/redirects; adjust when using a reverse proxy.
   base_url: "http://localhost:8112/"
 
+# Valkey (only needed when you set limiter=true)
+# valkey:
+#   url: "valkey://localhost:6379/0"
+
 outgoing:
+  # Global timeout for engines (can be overridden per engine via `timeout`)
   request_timeout: 3.0
+  # (optional) a contact suffix can help when requesting unblocks
+  # useragent_suffix: " | admin@example.org"
 
 # preferences:
 #   lock:
 #     - autocomplete
 #     - method
 
-# engines:
-#
+# Plugins (optional, safe defaults)
+plugins:
+  - plugin: "Open Access DOI"
+    default_on: true
+  - plugin: "Auto-Search-on-Category-Select"
+    default_on: true
+
+# engines: enable only the ones you actually use; give each a timeout
+engines:
+  - name: duckduckgo
+    disabled: false
+    categories: general
+    timeout: 2.0
+
+  - name: wikipedia
+    disabled: false
+    categories: knowledge
+    timeout: 2.0
+
 #   - name: fdroid
 #     disabled: false
 #
@@ -42,18 +87,7 @@ outgoing:
 #     categories: TV
 #     disabled: false
 
-# engines:
-#   - name: duckduckgo
-#     disabled: false
-#     categories: general
-#     timeout: 2.0
-
-#   - name: wikipedia
-#     disabled: false
-#     categories: knowledge
-#     timeout: 2.0
-
-#   # Voor betaalde/official API's (stabieler):
+#   # For paid/official APIIs (more stable than scraping-based engines):
 #   - name: google_cs            # Google Custom Search JSON API
 #     disabled: true
 #     api_key: "${GOOGLE_API_KEY}"
@@ -61,3 +95,13 @@ outgoing:
 #     cx: "${GOOGLE_CX}"
 #     categories: general
 #     timeout: 3.0
+
+  # Disable engines explicitly to avoid warnings 
+  - name: ahmia
+    disabled: true
+  - name: "yacy images"
+    disabled: true
+    # Requires base_url to personal YaCy; without that: disable engine
+    # base_url: "http://yacy:8090"
+  - name: torch
+    disabled: true
