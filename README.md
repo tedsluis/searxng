@@ -150,14 +150,19 @@ engines:
     categories: knowledge
     timeout: 5.0
 
-#   # For paid/official APIIs (more stable than scraping-based engines):
-#   - name: google_cs            # Google Custom Search JSON API
-#     disabled: true
-#     api_key: "${GOOGLE_API_KEY}"
-#     engine: google_cs
-#     cx: "${GOOGLE_CX}"
-#     categories: general
-#     timeout: 3.0
+  # Google Custom Search JSON API (100 API calls per day free)
+  # https://developers.google.com/custom-search/v1/overview
+  # https://console.cloud.google.com/apis/api/customsearch.googleapis.com/quotas
+  # https://console.cloud.google.com/marketplace/product/google/customsearch.googleapis.com?q=search&referrer=search
+  # https://cse.google.com/cse/all
+  # https://programmablesearchengine.google.com/controlpanel/overview
+  - name: google_cs
+    disabled: true
+    api_key: "${GOOGLE_API_KEY}"   # add your own API key
+    engine: google_cs
+    cx: "${GOOGLE_CX}"             # add your own CX (Unique search engine ID)
+    categories: general
+    timeout: 5.0
 ```
 
 ## Systemd service
