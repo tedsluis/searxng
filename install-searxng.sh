@@ -51,21 +51,31 @@ if [ $UPDATE_ONLY -eq 0 ]; then
     SECRET_KEY=`openssl rand -hex 32`
     sudo sed -i "s|^  secret_key: .*|  secret_key: \"${SECRET_KEY}\"|" "$SETTINGS_FILE"
     echo "Edit $SETTINGS_FILE to configure API endpoints and websearch keys."
+  else
+    echo "$SETTINGS_FILE already exists, skipping copy."
+    echo "Edit $SETTINGS_FILE to configure API endpoints and websearch keys and restart searxng.service."
   fi
 fi
 
-echo "Installing searxng.service to $SYSTEMD_TARGET..."
-sudo mkdir -p "$SYSTEMD_TARGET"
-sudo cp "$SERVICE_FILE" "$SYSTEMD_TARGET/searxng.service"
-
-echo "Reloading systemd..."
-$SYSTEMCTL daemon-reload
+if [ ! -f "$SYSTEMD_TARGET/searxng.service" ]; then
+  echo "Installing searxng.service to $SYSTEMD_TARGET..."
+  sudo mkdir -p "$SYSTEMD_TARGET"
+  sudo cp "$SERVICE_FILE" "$SYSTEMD_TARGET/searxng.service"
+  echo "Reloading systemd..."
+  $SYSTEMCTL daemon-reload
+else
+  echo "searxng.service already installed, skipping copy."
+  echo "Edit $SYSTEMD_TARGET/searxng.service if needed and restart searxng.service."
+fi
 
 echo "Pulling latest container image..."
-podman pull ghcr.io/searxng/searxng:latest
+sudo podman pull ghcr.io/searxng/searxng:latest
 
 echo "Enabling and starting searxng.service..."
 $SYSTEMCTL enable --now searxng.service
+
+echo "Restarting searxng.service to apply changes..."
+$SYSTEMCTL restart searxng.service
 
 cat <<EOF
 

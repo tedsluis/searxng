@@ -1,18 +1,22 @@
 # SearXNG settings — minimal & Open-WebUI-friendly
 # Place as /opt/searxng/config/settings.yml (mounted to /etc/searxng inside the container)
+# https://docs.searxng.org/admin/settings/index.html
 
 use_default_settings: true
 
 # UI language only; does NOT change search language.
+# https://docs.searxng.org/admin/settings/settings_ui.html
 ui:
   default_locale: nl
 
 # Branding
+# https://docs.searxng.org/admin/settings/settings_brand.html
 general:
   debug: false
   instance_name: "SearXNG"
 
-# Search behavior & API 
+# Search behavior & API
+# https://docs.searxng.org/admin/settings/settings_search.html
 search:
   # Safe search level (0=off, 1=moderate, 2=strict)
   safe_search: 1
@@ -32,7 +36,7 @@ search:
     - en-GB
     - nl
 
-
+# https://docs.searxng.org/admin/settings/settings_server.html
 server:
   # secret_key: "REPLACE_WITH_RANDOM_HEX"
   secret_key: "ultrasecretkey"
@@ -44,14 +48,22 @@ server:
   base_url: "http://localhost:8112/"
 
 # Valkey (only needed when you set limiter=true)
+# https://docs.searxng.org/admin/settings/settings_valkey.html
 # valkey:
 #   url: "valkey://localhost:6379/0"
 
+# https://docs.searxng.org/admin/settings/settings_outgoing.html
 outgoing:
   # Global timeout for engines (can be overridden per engine via `timeout`)
-  request_timeout: 3.0
+  request_timeout: 5.0
+  
   # (optional) a contact suffix can help when requesting unblocks
   # useragent_suffix: " | admin@example.org"
+
+  # In case your have a http proxy to access internet
+  # proxies:
+  #  all://:
+  #    - "http://your-http-proxy:8080"
 
 # preferences:
 #   lock:
@@ -59,23 +71,34 @@ outgoing:
 #     - method
 
 # Plugins (optional, safe defaults)
-plugins:
-  - plugin: "Open Access DOI"
-    default_on: true
-  - plugin: "Auto-Search-on-Category-Select"
-    default_on: true
+# https://docs.searxng.org/admin/settings/settings_plugins.html
+# plugins:
+#   - plugin: "Open Access DOI"
+#     default_on: true
+#   - plugin: "Auto-Search-on-Category-Select"
+#     default_on: true
 
 # engines: enable only the ones you actually use; give each a timeout
+# https://docs.searxng.org/admin/settings/settings_engines.html
 engines:
   - name: duckduckgo
     disabled: false
     categories: general
-    timeout: 2.0
+    timeout: 5.0
 
   - name: wikipedia
     disabled: false
     categories: knowledge
-    timeout: 2.0
+    timeout: 5.0
+
+#   # For paid/official APIIs (more stable than scraping-based engines):
+#   - name: google_cs            # Google Custom Search JSON API
+#     disabled: true
+#     api_key: "${GOOGLE_API_KEY}"
+#     engine: google_cs
+#     cx: "${GOOGLE_CX}"
+#     categories: general
+#     timeout: 5.0
 
 #   - name: fdroid
 #     disabled: false
@@ -86,15 +109,6 @@ engines:
 #   - name: mediathekviewweb
 #     categories: TV
 #     disabled: false
-
-#   # For paid/official APIIs (more stable than scraping-based engines):
-#   - name: google_cs            # Google Custom Search JSON API
-#     disabled: true
-#     api_key: "${GOOGLE_API_KEY}"
-#     engine: google_cs
-#     cx: "${GOOGLE_CX}"
-#     categories: general
-#     timeout: 3.0
 
   # Disable engines explicitly to avoid warnings 
   - name: ahmia

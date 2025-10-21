@@ -4,6 +4,18 @@ This repo contains a simple way to run **SearXNG** in a Podman container on Fedo
 
 > Tested on Fedora Workstation with Podman. Service runs as a systemd **system** unit by default.
 
+## Overview
+SearXNG is a free, open-source metasearch engine: it sends your query to many other search engines (Google, Bing, DuckDuckGo, Qwant, Wikipedia, etc.), merges the results, and strips tracking so you aren’t profiled. It’s the actively-maintained successor to the older “searx.” 
+
+### Key points
+
+* **Privacy-friendly**: doesn’t track users; removes identifying data from upstream requests. 
+* **Many sources**: supports dozens of engines and result categories (Web, Images, Videos, News, IT, Science, etc.). 
+* **Self-host or use a public instance**: you can run your own server or use one from a community-maintained list. 
+* **Provides Web Serarch for LLM tools**: Tools like Open-webUI can use the SearXNG API for their Web Search calls.
+* **Open source & license**: code is on GitHub under AGPL-3.0. 
+* **Why “SearXNG” vs “searx”**? SearXNG is the continuation with faster updates and more features; searx itself has seen reduced/ended development.
+
 ![alt text](images/image1.png)
 
 ## Contents
@@ -26,11 +38,7 @@ sudo dnf install -y podman
 # 2) Run the installer (creates /opt/searxng, installs service)
 sudo bash install-searxng.sh
 
-# 3) Enable & start
-sudo systemctl daemon-reload
-sudo systemctl enable --now searxng.service
-
-# 4) Test (HTML & JSON)
+# 3) Test (HTML & JSON)
 curl -fsS "http://localhost:8112/search?q=searxng" | head -n 5
 curl -fsSG "http://localhost:8112/search" --data-urlencode "q=searxng" --data-urlencode "format=json" | jq .
 ```
@@ -48,14 +56,16 @@ The service mounts:
 - `/opt/searxng/config → /etc/searxng` (settings and limiter files)
 - `/opt/searxng/data   → /var/cache/searxng` (cache)
 
-Edit `/opt/searxng/config/settings.yml` and restart:
+Edit `/opt/searxng/config/settings.yml` or `/etc/systemd/system/searxng.service` and restart:
 
 ```bash
+sudo systemctl daemon-reload            # only when searxng.service is changed.
 sudo systemctl restart searxng.service
 ```
 
 ### Minimal recommended settings
 
+/opt/searxng/config/settings.yml
 ```yaml
 # SearXNG settings — minimal & Open-WebUI-friendly
 # Place as /opt/searxng/config/settings.yml (mounted to /etc/searxng inside the container)
@@ -92,8 +102,7 @@ search:
     - nl
 
 server:
-  # secret_key: "REPLACE_WITH_RANDOM_HEX"
-  secret_key: "ultrasecretkey"
+  secret_key: "REPLACE_WITH_YOUR_OWN_RANDOM_HEX"
   # Turn limiter off if you don’t run Valkey (recommended for local-only use)
   limiter: false
   # Proxy images for privacy
@@ -101,28 +110,54 @@ server:
   # Fixes links/redirects; adjust when using a reverse proxy.
   base_url: "http://localhost:8112/"
 
+# Valkey (only needed when you set limiter=true)
+# valkey:
+#   url: "valkey://localhost:6379/0"
+
 outgoing:
   # Global timeout for engines (can be overridden per engine via `timeout`)
-  request_timeout: 3.0
+  request_timeout: 5.0
+  
+  # (optional) a contact suffix can help when requesting unblocks
+  # useragent_suffix: " | admin@example.org"
+
+  # In case you need to configure a http proxy to access internet.
+  # proxies:
+  #  all://:
+  #    - "http://your-http-proxy:8080"
+
+# preferences:
+#   lock:
+#     - autocomplete
+#     - method
 
 # Plugins (optional, safe defaults)
-plugins:
-  - plugin: "Open Access DOI"
-    default_on: true
-  - plugin: "Auto-Search-on-Category-Select"
-    default_on: true
+#plugins:
+#  - plugin: "Open Access DOI"
+#    default_on: true
+#  - plugin: "Auto-Search-on-Category-Select"
+#    default_on: true
 
 # engines: enable only the ones you actually use; give each a timeout
 engines:
   - name: duckduckgo
     disabled: false
     categories: general
-    timeout: 2.0
+    timeout: 5.0
 
   - name: wikipedia
     disabled: false
     categories: knowledge
-    timeout: 2.0
+    timeout: 5.0
+
+#   # For paid/official APIIs (more stable than scraping-based engines):
+#   - name: google_cs            # Google Custom Search JSON API
+#     disabled: true
+#     api_key: "${GOOGLE_API_KEY}"
+#     engine: google_cs
+#     cx: "${GOOGLE_CX}"
+#     categories: general
+#     timeout: 3.0
 ```
 
 ## Systemd service
@@ -174,6 +209,11 @@ sudo systemctl start searxng.service
 # Or use the helper:
 sudo bash install-searxng.sh --update
 ```
+
+## documentation
+
+* https://github.com/searxng/searxng
+* https://docs.searxng.org/admin/settings/index.html
 
 ## License
 

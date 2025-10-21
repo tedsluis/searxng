@@ -8,6 +8,15 @@ Type=notify
 Restart=on-failure
 RestartSec=10
 TimeoutStartSec=300
+
+# In case you need to configure a http proxy to access internet:
+# Environment="no_proxy=localhost,127.0.0.1,.my-domain.org"
+# Environment="NO_PROXY=localhost,127.0.0.1,.my-domain.org"
+# Environment="HTTPS_PROXY=http://your-http-proxy:8080"
+# Environment="HTTP_PROXY=http://your-http-proxy:8080"
+# Environment="https_proxy=http://your-http-proxy:8080"
+# Environment="http_proxy=http://your-http-proxy:8080"
+
 ExecStartPre=/usr/bin/podman pull ghcr.io/searxng/searxng:latest
 ExecStart=/usr/bin/podman run --rm --name searxng \
   --replace \
